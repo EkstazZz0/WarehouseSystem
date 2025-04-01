@@ -3,11 +3,12 @@ import os
 from fastapi import Depends
 from typing import Annotated
 
+from app.core.config import db_connect_url
 
-db_connect_url = os.getenv("DATABASE_CONNECT_URL")
+
 connect_args = {"check_same_thread": False}
 
-engine=create_engine(db_connect_url, connect_args=connect_args)
+engine=create_engine(db_connect_url, connect_args=connect_args, echo=True)
 
 def get_session():
     with Session(engine) as session:

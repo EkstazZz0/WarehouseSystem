@@ -3,10 +3,8 @@ from uuid import UUID
 
 
 class ItemBase(SQLModel):
-    name: str = Field(unique=True, index=True)
+    name: str = Field(unique=True, index=True, min_length=3, max_length=256)
     desciption: str = Field()
-    quantity: int | None = Field(default=0)
-    
 
 
 class ItemCreate(ItemBase):
@@ -14,13 +12,14 @@ class ItemCreate(ItemBase):
 
 
 class ItemUpdate(ItemBase):
-    name: str | None = Field(default=None)
+    name: str | None = Field(default=None, min_length=3, max_length=256)
     desciption: str | None = Field(default=None)
-    quantity: int | None = Field(default=0)
 
 
 class ItemPublic(ItemBase):
     item_id: UUID = Field()
+    quantity: int = Field()
+    reserved: int = Field()
 
 
 class ItemSupply(SQLModel):
