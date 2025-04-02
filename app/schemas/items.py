@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, Field
 from uuid import UUID
+from datetime import datetime
 
 
 class ItemBase(SQLModel):
@@ -20,6 +21,8 @@ class ItemPublic(ItemBase):
     item_id: UUID = Field()
     quantity: int = Field()
     reserved: int = Field()
+    created_at: datetime = Field()
+    updated_at: datetime = Field()
 
 
 class ItemSupply(SQLModel):

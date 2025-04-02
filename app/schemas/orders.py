@@ -5,6 +5,7 @@ from enum import Enum
 
 
 class OrderStatus(Enum):
+    accepted = 'accepted'
     on_delivery = 'on_delivery'
     partially_delivered = 'partially_delivered'
     receive_pending = 'receive_pending'
@@ -24,7 +25,12 @@ class OrderItem(SQLModel):
     order_item_id: UUID = Field()
     item_id: UUID = Field()
     quantity: int = Field(gt=0)
-    status: OrderItemStatus
+    status: OrderItemStatus = Field()
+
+
+class CreateOrderItem(SQLModel):
+    item_id: UUID = Field()
+    quantity: int = Field(gt=0)
 
 
 class OrderPublic(SQLModel):

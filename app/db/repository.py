@@ -3,10 +3,12 @@ from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
 import traceback
+from datetime import datetime
 
 from app.db.session import engine, SessionDep
-from app.db.models import Item
+from app.db.models import Item, Order, OrderItem
 from app.schemas.items import ItemCreate, ItemUpdate, ItemSupply
+from app.schemas.orders import CreateOrderItem, OrderItemStatus
 
 
 def init_db():
@@ -31,13 +33,14 @@ def create_item(session: SessionDep, item: ItemCreate) -> Item:
     return db_item
 
 
-def update_item(item_id: UUID, item: ItemUpdate, session: SessionDep):
+def update_item(item_id: UUID, item: ItemUpdate, session: SessionDep) -> Item:
     db_item = session.get(Item, item_id)
 
     if not db_item:
         raise HTTPException(status_code=400, detail=f'Item with id: {item_id} does not exists in database.')
     
     item_data = item.model_dump(exclude_unset=True)
+    item_data['updated_at'] = datetime.now()
     db_item.sqlmodel_update(item_data)
     session.add(db_item)
 
@@ -59,6 +62,7 @@ def take_delivery(items: list[ItemSupply], session: SessionDep):
             raise HTTPException(status_code=400, detail=f'Item with id: {item.item_id} was not found in database')
 
         db_item.quantity += item.quantity
+        db_item.updated_at = datetime.now()
         session.add(db_item)
         try:
             session.commit()
@@ -67,3 +71,39 @@ def take_delivery(items: list[ItemSupply], session: SessionDep):
         session.refresh(db_item)
 
 
+def create_order(session: SessionDep) -> Order:
+    order = Order()
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+    return order
+
+
+def get_status_for_order_item(order_item: CreateOrderItem, session: SessionDep):
+    item = session.get(Item, order_item.item_id)
+
+    if not item:
+        session.rollback()
+        raise HTTPException(status_code=400, detail=f'Item with id: {order_item.item_id} does not exist in database')
+    
+    item.reserved += order_item.quantity
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+
+    if item.quantity - item.reserved >= 0:
+        return OrderItemStatus.receivable
+    
+    return OrderItemStatus.on_delivery
+
+
+def create_order_items(order_id: UUID, order_items: list[CreateOrderItem], session: SessionDep) -> list[OrderItem]:
+    db_order_items = []
+    for order_item in order_items:
+        db_order_item = OrderItem(order_item, status=get_status_for_order_item(), order_id=order_id)
+        session.add(db_order_item)
+        session.commit()
+        session.refresh(db_order_item)
+        db_order_items.append(db_order_item)
+    
+    return db_order_items
