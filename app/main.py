@@ -12,7 +12,7 @@ load_dotenv()
 async def lifespan(app: FastAPI):
     init_db()
     yield
-    pass
+    return
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(item_router)

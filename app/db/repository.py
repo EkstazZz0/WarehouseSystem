@@ -2,10 +2,11 @@ from sqlmodel import SQLModel
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
+import traceback
 
 from app.db.session import engine, SessionDep
 from app.db.models import Item
-from app.schemas.items import ItemCreate, ItemUpdate
+from app.schemas.items import ItemCreate, ItemUpdate, ItemSupply
 
 
 def init_db():
@@ -50,7 +51,19 @@ def update_item(item_id: UUID, item: ItemUpdate, session: SessionDep):
     return db_item
 
 
-def take_delivery():
-    pass
+def take_delivery(items: list[ItemSupply], session: SessionDep):
+    for item in items:
+        db_item = session.get(Item, item.item_id)
+
+        if not db_item:
+            raise HTTPException(status_code=400, detail=f'Item with id: {item.item_id} was not found in database')
+
+        db_item.quantity += item.quantity
+        session.add(db_item)
+        try:
+            session.commit()
+        except Exception as e:
+            raise HTTPException(status_code=400, detail='something went wrong with database')
+        session.refresh(db_item)
 
 

@@ -2,3 +2,5 @@
 __pycache__/
 
 .env
+
+app/db/database.sqlite3

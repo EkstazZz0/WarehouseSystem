@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.schemas.items import ItemUpdate, ItemSupply, ItemPublic, ItemCreate
-from app.db.repository import create_item as db_create_item, update_item as db_update_item
+from app.db.repository import create_item as db_create_item, update_item as db_update_item, take_delivery
 from app.db.session import SessionDep
 
 from uuid import UUID
@@ -23,6 +23,6 @@ async def update_item(item_id: UUID, item: ItemUpdate, session: SessionDep):
 
 
 @router.put("/deliver")
-async def item_supply(items: list[ItemSupply]) -> dict:
-
+async def supply_item(items: list[ItemSupply], session: SessionDep):
+    take_delivery(items=items, session=session)
     return {"success": True}
