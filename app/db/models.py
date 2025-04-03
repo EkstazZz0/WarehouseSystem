@@ -19,6 +19,8 @@ class Order(SQLModel, table=True):
     order_id: UUID = Field(default_factory=uuid4, primary_key=True)
     queue_number: int | None = Field(lt=1000, ge=0, unique=True, nullable=True, default=None)
     status: OrderStatus | None = Field(default=OrderStatus.accepted)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
 
 class OrderItem(SQLModel, table=True):

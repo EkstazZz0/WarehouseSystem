@@ -2,6 +2,7 @@ from sqlmodel import SQLModel, Field
 from pydantic import conlist
 from uuid import UUID
 from enum import Enum
+from datetime import datetime
 
 
 class OrderStatus(Enum):
@@ -35,6 +36,8 @@ class CreateOrder(SQLModel):
 
 class OrderPublic(SQLModel):
     order_id: UUID = Field()
-    queue_number: int = Field()
+    queue_number: int | None = Field(default=None)
     status: OrderStatus = Field()
+    created_at: datetime
+    updated_at: datetime
     items: list[OrderItemPublic] = Field()
