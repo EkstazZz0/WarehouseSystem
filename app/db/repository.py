@@ -8,7 +8,7 @@ from datetime import datetime
 from app.db.session import engine, SessionDep
 from app.db.models import Item, Order, OrderItem
 from app.schemas.items import ItemCreate, ItemUpdate, ItemSupply
-from app.schemas.orders import CreateOrderItem, OrderItemStatus
+from app.schemas.orders import CreateOrder, OrderItemStatus, OrderPublic, OrderItemPublic
 
 
 def init_db():
@@ -79,31 +79,46 @@ def create_order(session: SessionDep) -> Order:
     return order
 
 
-def get_status_for_order_item(order_item: CreateOrderItem, session: SessionDep):
-    item = session.get(Item, order_item.item_id)
-
-    if not item:
-        session.rollback()
-        raise HTTPException(status_code=400, detail=f'Item with id: {order_item.item_id} does not exist in database')
-    
-    item.reserved += order_item.quantity
-    session.add(item)
-    session.commit()
-    session.refresh(item)
-
-    if item.quantity - item.reserved >= 0:
-        return OrderItemStatus.receivable
-    
-    return OrderItemStatus.on_delivery
-
-
-def create_order_items(order_id: UUID, order_items: list[CreateOrderItem], session: SessionDep) -> list[OrderItem]:
-    db_order_items = []
+def make_order(order_items: list[CreateOrder], session: SessionDep) -> OrderPublic:
+    db_items = []
     for order_item in order_items:
-        db_order_item = OrderItem(order_item, status=get_status_for_order_item(), order_id=order_id)
+        db_item = session.get(Item, order_item.item_id)
+
+        if not db_item:
+            session.rollback()
+            raise HTTPException(status_code=400, detail=f'Item with id: {order_item.item_id} was not found in database')
+        
+        db_items.append[db_item]
+    
+    public_order_items = []
+    order = create_order(session=session)
+
+    for order_item, db_item in zip(order_items, db_items):
+
+        if db_item.quantity - db_item.reserved >= order_item.quantity:
+            order_item_status = OrderItemStatus.receivable
+        else:
+            order_item_status = OrderItemStatus.on_delivery
+        
+        db_item.reserved += order_item.quantity
+        
+        session.add(db_item)
+        session.commit()
+        session.refresh(db_item)
+
+        db_order_item = OrderItem(**order_item.model_dump(), order_id=order.order_id, status=order_item_status)
+
         session.add(db_order_item)
         session.commit()
         session.refresh(db_order_item)
-        db_order_items.append(db_order_item)
+
+        public_order_item = OrderItemPublic.model_validate(db_order_item)
+        public_order_items.append(public_order_item)
     
-    return db_order_items
+    from app.core.utils import get_order_status
+    order.status = get_order_status(order_items=public_order_items)
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+
+    return OrderPublic(**order.model_dump(), items=public_order_items)

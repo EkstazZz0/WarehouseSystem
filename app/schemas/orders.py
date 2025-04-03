@@ -21,14 +21,14 @@ class OrderItemStatus(Enum):
     canceled = 'canceled'
 
 
-class OrderItem(SQLModel):
+class OrderItemPublic(SQLModel):
     order_item_id: UUID = Field()
     item_id: UUID = Field()
     quantity: int = Field(gt=0)
     status: OrderItemStatus = Field()
 
 
-class CreateOrderItem(SQLModel):
+class CreateOrder(SQLModel):
     item_id: UUID = Field()
     quantity: int = Field(gt=0)
 
@@ -37,4 +37,4 @@ class OrderPublic(SQLModel):
     order_id: UUID = Field()
     queue_number: int = Field()
     status: OrderStatus = Field()
-    items: list[OrderItem] = Field()
+    items: list[OrderItemPublic] = Field()
