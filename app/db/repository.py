@@ -10,6 +10,7 @@ from app.db.session import engine, SessionDep
 from app.db.models import Item, Order, OrderItem
 from app.schemas.items import ItemCreate, ItemUpdate, ItemSupply
 from app.schemas.orders import CreateOrder, OrderItemStatus, OrderPublic, OrderItemPublic, OrderStatus
+from app.core.utils import get_next_order_number, get_order_status
 
 
 def init_db():
@@ -81,7 +82,7 @@ def create_order(session: SessionDep) -> Order:
 
 
 def update_orders_status_by_delivery(items: list[ItemSupply], session: SessionDep) -> None:
-    from app.core.utils import get_order_status
+    # from app.core.utils import get_order_status
     for item in items:
         db_item = session.get(Item, item.item_id)
         order_ids = session.exec(select(OrderItem.order_id).where((OrderItem.item_id == item.item_id) & (OrderItem.status == OrderItemStatus.on_delivery))).all()
@@ -165,7 +166,7 @@ def make_order(order_items: list[CreateOrder], session: SessionDep) -> OrderPubl
         public_order_item = OrderItemPublic.model_validate(db_order_item)
         public_order_items.append(public_order_item)
     
-    from app.core.utils import get_order_status
+    # from app.core.utils import get_order_status
 
     order.status = get_order_status(order_items=public_order_items)
     order.updated_at = datetime.now()
@@ -190,11 +191,16 @@ def generate_order_number(order_id: UUID, session: SessionDep) -> int:
         raise HTTPException(status_code=404, detail=f'Order with id: {order_id} was not found in database.')
     elif order.status in [OrderStatus.accepted, OrderStatus.canceled, OrderStatus.finished, OrderStatus.partially_finished]:
         raise HTTPException(status_code=422, detail=f'Order with id: {order_id} does not exist')
+    elif order.queue_number is not None:
+        return order.queue_number
     
-    max_order_queue_number = session.exec(func.max(Order.queue_number))
+    max_order_queue_number = session.exec(select(func.max(Order.queue_number)).where(Order.queue_number != None)).first()
+    print(session.exec(select(Order.queue_number).where(Order.queue_number != None).order_by(Order.queue_number)).all(), "\n\n\n\n")
 
-    if not max_order_queue_number or max_order_queue_number == 999:
+    if max_order_queue_number is None:
         order_queue_number = 0
+    elif max_order_queue_number == 999:
+        order_queue_number = get_next_order_number(order_numbers=session.exec(select(Order.queue_number).where(Order.queue_number != None).order_by(Order.queue_number)).all())
     else:
         order_queue_number = max_order_queue_number + 1
     

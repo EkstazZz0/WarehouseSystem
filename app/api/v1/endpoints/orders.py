@@ -22,8 +22,8 @@ async def get_order(order_id: UUID, session: SessionDep):
 
 
 @router.patch("/receive/{order_id}")
-async def receive_items_from_order(order_id: UUID) -> int:
-    return generate_order_number(order_id=order_id, session=SessionDep)
+async def receive_items_from_order(order_id: UUID, session: SessionDep) -> int:
+    return generate_order_number(order_id=order_id, session=session)
 
 
 @router.post("/confirm/{order_id}", response_model=OrderPublic)
