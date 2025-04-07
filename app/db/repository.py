@@ -9,7 +9,7 @@ from sqlalchemy import func, or_
 from app.db.session import engine, SessionDep
 from app.db.models import Item, Order, OrderItem
 from app.schemas.items import ItemCreate, ItemUpdate, ItemSupply
-from app.schemas.orders import CreateOrder, OrderItemStatus, OrderPublic, OrderItemPublic, OrderStatus
+from app.schemas.orders import CreateOrder, OrderItemStatus, OrderPublic, OrderItemPublic, OrderStatus, ConfirmReceiveOrderItem
 from app.core.utils import get_next_order_number, get_order_status
 
 
@@ -82,7 +82,6 @@ def create_order(session: SessionDep) -> Order:
 
 
 def update_orders_status_by_delivery(items: list[ItemSupply], session: SessionDep) -> None:
-    # from app.core.utils import get_order_status
     for item in items:
         db_item = session.get(Item, item.item_id)
         order_ids = session.exec(select(OrderItem.order_id).where((OrderItem.item_id == item.item_id) & (OrderItem.status == OrderItemStatus.on_delivery))).all()
@@ -165,8 +164,6 @@ def make_order(order_items: list[CreateOrder], session: SessionDep) -> OrderPubl
 
         public_order_item = OrderItemPublic.model_validate(db_order_item)
         public_order_items.append(public_order_item)
-    
-    # from app.core.utils import get_order_status
 
     order.status = get_order_status(order_items=public_order_items)
     order.updated_at = datetime.now()
@@ -213,8 +210,57 @@ def generate_order_number(order_id: UUID, session: SessionDep) -> int:
     return order.queue_number
 
 
+def confirm_order_receiving(order_id: UUID, order_items: list[ConfirmReceiveOrderItem], session: SessionDep) -> OrderPublic:
+    order_items_ids = [order_item.order_item_id for order_item in order_items]
+    db_order_items = session.exec(select(OrderItem).where(OrderItem.order_item_id.in_(order_items_ids))).all()
 
+    order = session.get(Order, order_id)
 
-
+    if not order:
+        raise HTTPException(status_code=404, detail=f'Order with id: {order_id} was not found in database.')
     
+    if not order.queue_number:
+        raise HTTPException(status_code=422, detail=f'Order must have a queue number')
+
+    if not db_order_items:
+        raise HTTPException(status_code=404, detail='Order items was not found in database')
+
+    if not all([db_order_item.order_id == order_id for db_order_item in db_order_items]):
+        raise HTTPException(status_code=422, detail='Some items do not match the order')
+    
+    if not all([db_order_item.status == OrderItemStatus.receivable for db_order_item in db_order_items]):
+        raise HTTPException(status_code=422, detail='All the items must have a receivable status')
+    
+    for db_order_item in db_order_items:
+        db_order_item.status = OrderItemStatus([order_item.status for order_item in order_items if order_item.order_item_id == db_order_item.order_item_id][0].value)
+
+        item = session.get(Item, db_order_item.item_id)
+
+        if db_order_item.status == OrderItemStatus.received:
+            item.quantity -= db_order_item.quantity
+            item.reserved -= db_order_item.quantity
+        else:
+            item.reserved -= db_order_item.quantity
+        
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+
+        session.add(db_order_item)
+        session.commit()
+        session.refresh(db_order_item)
+    
+    public_order_items = [OrderItemPublic.model_validate(db_item_for_order) for db_item_for_order in session.exec(select(OrderItem).where(OrderItem.order_id == order_id)).all()]
+
+    order.status = get_order_status(order_items=public_order_items)
+    order.queue_number = None
+    order.updated_at = datetime.now()
+
+    session.add(order)
+    session.commit()
+    session.refresh()
+
+    return OrderPublic(**order.model_dump(), items=public_order_items)
+    
+
 

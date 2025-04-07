@@ -22,11 +22,21 @@ class OrderItemStatus(Enum):
     canceled = 'canceled'
 
 
+class ReceiveOrderItemStatus(Enum):
+    received = 'received'
+    canceled = 'canceled'
+
+
 class OrderItemPublic(SQLModel):
     order_item_id: UUID = Field()
     item_id: UUID = Field()
     quantity: int = Field(gt=0)
     status: OrderItemStatus = Field()
+
+
+class ConfirmReceiveOrderItem(SQLModel):
+    order_item_id: UUID = Field()
+    status: ReceiveOrderItemStatus = Field()
 
 
 class CreateOrder(SQLModel):

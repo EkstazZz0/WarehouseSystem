@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from uuid import UUID
 
-from app.schemas.orders import CreateOrder, OrderPublic
-from app.db.repository import make_order, get_order as db_get_order, generate_order_number
+from app.schemas.orders import CreateOrder, OrderPublic, ConfirmReceiveOrderItem
+from app.db.repository import make_order, get_order as db_get_order, generate_order_number, confirm_order_receiving
 from app.db.session import SessionDep
 
 router = APIRouter(
@@ -27,5 +27,5 @@ async def receive_items_from_order(order_id: UUID, session: SessionDep) -> int:
 
 
 @router.post("/confirm/{order_id}", response_model=OrderPublic)
-async def confirm_order_receive(order_id: UUID):
-    pass
+async def confirm_order_receive(order_id: UUID, order_items: list[ConfirmReceiveOrderItem], session: SessionDep):
+    return confirm_order_receiving(order_id=order_id, order_items=order_items, session=session)

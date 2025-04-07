@@ -8,11 +8,10 @@ from app.api.v1.endpoints.orders import router as order_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    drop_db()
     init_db()
     yield
     return
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 app.include_router(item_router)
 app.include_router(order_router)
