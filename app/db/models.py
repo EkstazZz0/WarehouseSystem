@@ -9,8 +9,8 @@ from app.schemas.orders import OrderStatus, OrderItemStatus
 
 class Item(ItemBase, table=True):
     item_id: UUID = Field(default_factory=uuid4, primary_key=True)
-    quantity: int | None = Field(default=0)
-    reserved: int | None = Field(default=0)
+    quantity: int | None = Field(default=0, ge=0)
+    reserved: int | None = Field(default=0, ge=0)
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 

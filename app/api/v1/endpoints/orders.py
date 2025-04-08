@@ -21,11 +21,11 @@ async def get_order(order_id: UUID, session: SessionDep):
     return db_get_order(order_id=order_id, session=session)
 
 
-@router.patch("/receive/{order_id}")
+@router.get("/receive/{order_id}")
 async def receive_items_from_order(order_id: UUID, session: SessionDep) -> int:
     return generate_order_number(order_id=order_id, session=session)
 
 
-@router.post("/confirm/{order_id}", response_model=OrderPublic)
+@router.patch("/confirm/{order_id}", response_model=OrderPublic)
 async def confirm_order_receive(order_id: UUID, order_items: list[ConfirmReceiveOrderItem], session: SessionDep):
     return confirm_order_receiving(order_id=order_id, order_items=order_items, session=session)

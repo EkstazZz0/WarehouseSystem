@@ -151,6 +151,7 @@ def make_order(order_items: list[CreateOrder], session: SessionDep) -> OrderPubl
             order_item_status = OrderItemStatus.on_delivery
         
         db_item.reserved += order_item.quantity
+        db_item.updated_at = datetime.now()
         
         session.add(db_item)
         session.commit()
@@ -202,6 +203,7 @@ def generate_order_number(order_id: UUID, session: SessionDep) -> int:
         order_queue_number = max_order_queue_number + 1
     
     order.queue_number = order_queue_number
+    order.updated_at = datetime.now()
 
     session.add(order)
     session.commit()
@@ -231,8 +233,14 @@ def confirm_order_receiving(order_id: UUID, order_items: list[ConfirmReceiveOrde
     if not all([db_order_item.status == OrderItemStatus.receivable for db_order_item in db_order_items]):
         raise HTTPException(status_code=422, detail='All the items must have a receivable status')
     
+    if len(list(set(order_items))) != len(order_items):
+        raise HTTPException(status_code=422, detail='Items shouldn\'t be repeatable')
+    
     for db_order_item in db_order_items:
-        db_order_item.status = OrderItemStatus([order_item.status for order_item in order_items if order_item.order_item_id == db_order_item.order_item_id][0].value)
+        try:
+            db_order_item.status = OrderItemStatus([order_item.status for order_item in order_items if order_item.order_item_id == db_order_item.order_item_id][0].value)
+        except:
+            raise HTTPException(status_code=404, detail='Some of the items was not found in database.')
 
         item = session.get(Item, db_order_item.item_id)
 
@@ -241,6 +249,8 @@ def confirm_order_receiving(order_id: UUID, order_items: list[ConfirmReceiveOrde
             item.reserved -= db_order_item.quantity
         else:
             item.reserved -= db_order_item.quantity
+        
+        item.updated_at = datetime.now()
         
         session.add(item)
         session.commit()
