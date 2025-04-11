@@ -29,7 +29,7 @@ def create_item(session: SessionDep, item: ItemCreate) -> Item:
         session.commit()
     except IntegrityError as e:
         session.rollback()
-        raise HTTPException(status_code=400, detail=f'Item with name: {item.name} is already exists in database. It should be unique')
+        raise HTTPException(status_code=422, detail=f'Item with name: {item.name} is already exists in database. It should be unique')
     
     session.refresh(db_item)
     return db_item
@@ -221,7 +221,7 @@ def confirm_order_receiving(order_id: UUID, order_items: list[ConfirmReceiveOrde
     if not order:
         raise HTTPException(status_code=404, detail=f'Order with id: {order_id} was not found in database.')
     
-    if not order.queue_number:
+    if order.queue_number is None:
         raise HTTPException(status_code=422, detail=f'Order must have a queue number')
 
     if not db_order_items:
@@ -232,8 +232,8 @@ def confirm_order_receiving(order_id: UUID, order_items: list[ConfirmReceiveOrde
     
     if not all([db_order_item.status == OrderItemStatus.receivable for db_order_item in db_order_items]):
         raise HTTPException(status_code=422, detail='All the items must have a receivable status')
-    
-    if len(list(set(order_items))) != len(order_items):
+
+    if len(list(set([order_item.order_item_id for order_item in order_items]))) != len(order_items):
         raise HTTPException(status_code=422, detail='Items shouldn\'t be repeatable')
     
     for db_order_item in db_order_items:
@@ -268,7 +268,7 @@ def confirm_order_receiving(order_id: UUID, order_items: list[ConfirmReceiveOrde
 
     session.add(order)
     session.commit()
-    session.refresh()
+    session.refresh(order)
 
     return OrderPublic(**order.model_dump(), items=public_order_items)
     
