@@ -21,18 +21,15 @@ def drop_db():
     SQLModel.metadata.drop_all(engine)
 
 
-def create_item(session: SessionDep, item: ItemCreate) -> Item:
-    db_item = Item.model_validate(item)
-    session.add(db_item)
+def get_item(session: SessionDep, item_id: UUID) -> Item:
+    return session.get(Item, item_id)
 
-    try:
-        session.commit()
-    except IntegrityError as e:
-        session.rollback()
-        raise HTTPException(status_code=422, detail=f'Item with name: {item.name} is already exists in database. It should be unique')
-    
-    session.refresh(db_item)
-    return db_item
+
+def create_item(session: SessionDep, item: Item) -> Item:
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+    return item
 
 
 def update_item(item_id: UUID, item: ItemUpdate, session: SessionDep) -> Item:
