@@ -21,10 +21,6 @@ def drop_db():
     SQLModel.metadata.drop_all(engine)
 
 
-def get_item(session: SessionDep, item_id: UUID) -> Item:
-    return session.get(Item, item_id)
-
-
 def create_item(session: SessionDep, item: Item) -> Item:
     session.add(item)
     session.commit()
