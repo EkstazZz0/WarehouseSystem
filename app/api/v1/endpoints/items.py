@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from app.schemas.items import ItemUpdate, ItemSupply, ItemPublic, ItemCreate
-from app.db.repository import create_item as db_create_item, update_item as db_update_item, take_delivery, update_orders_status_by_delivery, get_item
+from app.db.repository import create_item as db_create_item, update_item as db_update_item, take_delivery, update_orders_status_by_delivery
 from app.db.session import SessionDep
 from app.db.models import Item
 
