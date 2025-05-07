@@ -28,25 +28,19 @@ def create_item(session: SessionDep, item: Item) -> Item:
     return item
 
 
-def update_item(item_id: UUID, item: ItemUpdate, session: SessionDep) -> Item:
-    db_item = session.get(Item, item_id)
-
-    if not db_item:
-        raise HTTPException(status_code=400, detail=f'Item with id: {item_id} does not exists in database.')
+def update_item(item:Item, item_to_update: ItemUpdate, session: SessionDep) -> Item:
     
-    item_data = item.model_dump(exclude_unset=True)
+    item_data = item_to_update.model_dump(exclude_unset=True)
     item_data['updated_at'] = datetime.now()
-    db_item.sqlmodel_update(item_data)
-    session.add(db_item)
+    item.sqlmodel_update(item_data)
 
-    try:
-        session.commit()
-    except IntegrityError as e:
-        session.rollback()
-        raise HTTPException(status_code=422, detail=f'Item with name: {item.name} is already exists in database. It should be unique')
+    session.add(item)
+
+    session.commit()
     
-    session.refresh(db_item)
-    return db_item
+    session.refresh(item)
+
+    return item
 
 
 def take_delivery(items: list[ItemSupply], session: SessionDep):
