@@ -9,7 +9,7 @@ RUN pip install -r requirements.txt
 
 COPY app .
 
-ENV TZ=Europe/Samara
+ENV TZ=UTC
 RUN ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 CMD ["fastapi", "run", "main.py"]
