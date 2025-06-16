@@ -112,12 +112,8 @@ def update_orders_status_by_delivery(items: list[ItemSupply], session: SessionDe
 
 
 def make_order(order_items: list[CreateOrder], session: SessionDep) -> OrderPublic:
-    order_items_id = [order_item.item_id for order_item in order_items]
-
-    if len(list(set(order_items_id))) != len(order_items_id):
-        raise HTTPException(status_code=422, detail=f'Items id in list should not be repeatable')
-    
     db_items = []
+    
     for order_item in order_items:
         db_item = session.get(Item, order_item.item_id)
 

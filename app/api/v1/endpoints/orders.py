@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from uuid import UUID
 
 from app.schemas.orders import CreateOrder, OrderPublic, ConfirmReceiveOrderItem
@@ -13,6 +13,11 @@ router = APIRouter(
 
 @router.post("/create", response_model=OrderPublic)
 async def create_order(order_items: list[CreateOrder], session: SessionDep):
+    order_items_id = [order_item.item_id for order_item in order_items]
+
+    if len(list(set(order_items_id))) != len(order_items_id):
+        raise HTTPException(status_code=422, detail=f'Items id in list should not be repeatable')
+    
     return make_order(order_items=order_items, session=session)
 
 
