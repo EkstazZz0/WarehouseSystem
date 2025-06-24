@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from uuid import UUID
+from typing import Annotated
 
-from app.schemas.orders import CreateOrder, OrderPublic, ConfirmReceiveOrderItem
+from app.schemas.orders import CreateOrder, OrderPublic, ConfirmReceiveOrderItem, ItemsOfNewOrder
 from app.db.repository import make_order, get_order as db_get_order, generate_order_number, confirm_order_receiving
 from app.db.session import SessionDep
 
@@ -12,7 +13,7 @@ router = APIRouter(
 
 
 @router.post("/create", response_model=OrderPublic)
-async def create_order(order_items: list[CreateOrder], session: SessionDep):
+async def create_order(order_items: Annotated[ItemsOfNewOrder], session: SessionDep):
     order_items_id = [order_item.item_id for order_item in order_items]
 
     if len(list(set(order_items_id))) != len(order_items_id):

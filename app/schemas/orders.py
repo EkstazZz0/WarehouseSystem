@@ -3,6 +3,7 @@ from pydantic import conlist
 from uuid import UUID
 from enum import Enum
 from datetime import datetime
+from pydantic import conlist
 
 
 class OrderStatus(Enum):
@@ -42,6 +43,9 @@ class ConfirmReceiveOrderItem(SQLModel):
 class CreateOrder(SQLModel):
     item_id: UUID = Field()
     quantity: int = Field(gt=0)
+
+
+ItemsOfNewOrder = conlist(CreateOrder, min_length=1, max_length=10)
 
 
 class OrderPublic(SQLModel):
