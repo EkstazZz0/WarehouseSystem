@@ -13,7 +13,7 @@ router = APIRouter(
 
 
 @router.post("/create", response_model=OrderPublic)
-async def create_order(order_items: Annotated[ItemsOfNewOrder], session: SessionDep):
+async def create_order(order_items: Annotated[ItemsOfNewOrder, ...], session: SessionDep): # type: ignore
     order_items_id = [order_item.item_id for order_item in order_items]
 
     if len(list(set(order_items_id))) != len(order_items_id):

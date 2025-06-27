@@ -11,5 +11,6 @@ COPY app .
 
 ENV TZ=UTC
 RUN ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev
 
 CMD ["fastapi", "run", "main.py"]
