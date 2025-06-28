@@ -17,4 +17,8 @@ db_connect_configuration = {
     "echo": db_logs
 }
 
+kafka_producer_config = {
+    'bootstrap.servers': os.getenv("KAFKA_HOST", "localhost:9092"),
+}
+
 time_zone = os.getenv("TZ")

@@ -1,5 +1,3 @@
-from sqlmodel import create_engine, Session
-import os
 from fastapi import Depends
 from typing import Annotated, AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine

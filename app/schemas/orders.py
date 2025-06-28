@@ -7,7 +7,7 @@ from pydantic import conlist
 
 
 class OrderStatus(Enum):
-    accepted = 'accepted'
+    pending = 'pending'
     on_delivery = 'on_delivery'
     partially_delivered = 'partially_delivered'
     receive_pending = 'receive_pending'
@@ -17,6 +17,7 @@ class OrderStatus(Enum):
 
 
 class OrderItemStatus(Enum):
+    pending = 'pending'
     receivable = 'receivable'
     on_delivery = 'on_delivery'
     received = 'received'
@@ -42,7 +43,7 @@ class ConfirmReceiveOrderItem(SQLModel):
 
 class CreateOrder(SQLModel):
     item_id: UUID = Field()
-    quantity: int = Field(gt=0)
+    quantity: int = Field(gt=0, le=10)
 
 
 ItemsOfNewOrder = conlist(CreateOrder, min_length=1, max_length=10)
