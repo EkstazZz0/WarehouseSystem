@@ -1,14 +1,8 @@
-from sqlmodel import SQLModel, Field
-from enum import Enum
-from uuid import UUID
-from typing import Annotated
+from sqlmodel import SQLModel
 
-from app.schemas.orders import ItemsOfNewOrder, OrderPublic
+from app.schemas.orders import OrderPublic
 from app.schemas.items import ItemSupply
-
-class DBWorkerTaskTypes(Enum):
-    items_delivered = "items_delivered"
-    new_order = "new_order"
+from app.core.enums import DBWorkerTaskTypes
 
 
 class SupplyList(SQLModel):

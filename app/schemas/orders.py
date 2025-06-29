@@ -5,28 +5,7 @@ from enum import Enum
 from datetime import datetime
 from pydantic import conlist
 
-
-class OrderStatus(Enum):
-    pending = 'pending'
-    on_delivery = 'on_delivery'
-    partially_delivered = 'partially_delivered'
-    receive_pending = 'receive_pending'
-    partially_finished = 'partially_finished'
-    finished = 'finished'
-    canceled = 'canceled'
-
-
-class OrderItemStatus(Enum):
-    pending = 'pending'
-    receivable = 'receivable'
-    on_delivery = 'on_delivery'
-    received = 'received'
-    canceled = 'canceled'
-
-
-class ReceiveOrderItemStatus(Enum):
-    received = 'received'
-    canceled = 'canceled'
+from app.core.enums import OrderItemStatus, ReceiveOrderItemStatus, OrderStatus
 
 
 class OrderItemPublic(SQLModel):

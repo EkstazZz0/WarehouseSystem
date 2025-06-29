@@ -5,7 +5,7 @@ from datetime import datetime
 
 class ItemBase(SQLModel):
     name: str = Field(unique=True, index=True, min_length=3, max_length=256)
-    desciption: str = Field()
+    description: str = Field()
 
 
 class ItemCreate(ItemBase):
@@ -14,7 +14,7 @@ class ItemCreate(ItemBase):
 
 class ItemUpdate(ItemBase):
     name: str | None = Field(default=None, min_length=3, max_length=256)
-    desciption: str | None = Field(default=None)
+    description: str | None = Field(default=None)
 
 
 class ItemPublic(ItemBase):

@@ -1,12 +1,10 @@
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException
 from uuid import UUID
 from typing import Annotated
-import json
 
-from app.schemas.orders import CreateOrder, OrderPublic, ConfirmReceiveOrderItem, ItemsOfNewOrder
+from app.schemas.orders import OrderPublic, ConfirmReceiveOrderItem, ItemsOfNewOrder
 from app.db.repository import get_order as db_get_order, generate_order_number, confirm_order_receiving, create_order as db_create_order
 from app.db.session import SessionDep
-from app.db.models import Item
 from app.kafka.producer import producer, producer_delivery_report
 from app.kafka.models import KafkaMessageNewOrder
 

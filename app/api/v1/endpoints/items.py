@@ -1,12 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
+from typing import Annotated
 
 from app.schemas.items import ItemUpdate, ItemSupply, ItemPublic, ItemCreate
-from app.db.repository import create_item as db_create_item, update_item as db_update_item, take_delivery
+from app.db.repository import create_item as db_create_item, update_item as db_update_item, take_delivery, get_items as db_get_items
 from app.db.session import SessionDep
 from app.db.models import Item
 from app.kafka.producer import producer, producer_delivery_report
 from app.kafka.models import KafkaMessageNewSupply, SupplyList
+from app.core.enums import AvailableOrderColumn
 
 from uuid import UUID, uuid4
 
@@ -15,8 +17,15 @@ router = APIRouter(
     tags=['items']
 )
 
+@router.get("/", response_model=list[Item])
+async def get_items(session: SessionDep, 
+                    limit: Annotated[int | None, Query(gt=0, le=100)] = 10, 
+                    offset: Annotated[int | None, Query(ge=0)] = 0, 
+                    order_by: Annotated[AvailableOrderColumn | None, Query()] = AvailableOrderColumn.created_at):
+    return await db_get_items(session=session, limit=limit, offset=offset, order_by=order_by.value)
 
-@router.post("/create", response_model=ItemPublic)
+
+@router.post("/create", response_model=ItemPublic, status_code=status.HTTP_201_CREATED)
 async def create_item(item: ItemCreate, session: SessionDep):
     db_item = Item.model_validate(item)
     print(session)

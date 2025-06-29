@@ -58,6 +58,10 @@ async def take_delivery(items: list[ItemSupply], session: SessionDep):
     await session.refresh(db_item)
 
 
+async def get_items(session: SessionDep, limit, offset, order_by) -> list[Item]:
+    return (await session.execute(select(Item).limit(limit=limit).offset(offset=offset).order_by(getattr(Item, order_by)))).scalars().all()
+
+
 async def create_order(order_items: list[CreateOrder], session: SessionDep) -> OrderPublic:
     public_order_items = []
     order = Order()
@@ -95,12 +99,12 @@ async def get_order(order_id: UUID, session: SessionDep) -> OrderPublic:
 
 
 async def generate_order_number(order_id: UUID, session: SessionDep) -> int:
-    order = session.get(Order, order_id)
+    order = await session.get(Order, order_id)
 
     if not order:
         raise HTTPException(status_code=404, detail=f'Order with id: {order_id} was not found in database.')
-    elif order.status in [OrderStatus.accepted, OrderStatus.canceled, OrderStatus.finished, OrderStatus.partially_finished]:
-        raise HTTPException(status_code=422, detail=f'Order with id: {order_id} does not exist')
+    elif order.status in [OrderStatus.pending, OrderStatus.canceled, OrderStatus.finished, OrderStatus.partially_finished]:
+        raise HTTPException(status_code=422, detail=f'Order with id: {order_id} does not arrived yet or already finished')
     elif order.queue_number is not None:
         return order.queue_number
     
@@ -143,7 +147,7 @@ async def confirm_order_receiving(order_id: UUID, order_items: list[ConfirmRecei
     if not all([db_order_item.status == OrderItemStatus.receivable for db_order_item in db_order_items]):
         raise HTTPException(status_code=422, detail='All the items must have a receivable status')
 
-    if len(list(set([order_item.order_item_id for order_item in order_items]))) != len(order_items):
+    if len(set([order_item.order_item_id for order_item in order_items])) != len(order_items):
         raise HTTPException(status_code=422, detail='Items shouldn\'t be repeatable')
     
     for db_order_item in db_order_items:
