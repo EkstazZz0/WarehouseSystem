@@ -17,12 +17,23 @@ router = APIRouter(
     tags=['items']
 )
 
-@router.get("/", response_model=list[Item])
+
+@router.get("/", response_model=list[ItemPublic])
 async def get_items(session: SessionDep, 
                     limit: Annotated[int | None, Query(gt=0, le=100)] = 10, 
                     offset: Annotated[int | None, Query(ge=0)] = 0, 
                     order_by: Annotated[AvailableOrderColumn | None, Query()] = AvailableOrderColumn.created_at):
     return await db_get_items(session=session, limit=limit, offset=offset, order_by=order_by.value)
+
+
+@router.get("/{item_id}", response_model=ItemPublic)
+async def get_item(item_id: UUID, session: SessionDep):
+    item = await session.get(Item, item_id)
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Item with id {item_id} was not found in database.")
+
+    return await session.get(Item, item_id)
 
 
 @router.post("/create", response_model=ItemPublic, status_code=status.HTTP_201_CREATED)

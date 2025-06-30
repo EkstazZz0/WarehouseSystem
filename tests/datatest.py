@@ -30,3 +30,21 @@ update_items = [
         "description": "Really some desc of item 3",
     }
 ]
+
+supply_items = [
+    {
+        "item_id": "{item_id}",
+        "quantity": 4,
+    },
+    {
+        "item_id": "{item_id}",
+        "quantity": 9,
+    },
+    {
+        "item_id": "{item_id}",
+        "quantity": 13,
+    }
+]
+
+
+
