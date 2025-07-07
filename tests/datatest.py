@@ -1,3 +1,6 @@
+import random
+from uuid import UUID
+
 create_item1 = {
     "name": "Item1",
     "description": "Some description of Item 1"
@@ -31,20 +34,5 @@ update_items = [
     }
 ]
 
-supply_items = [
-    {
-        "item_id": "{item_id}",
-        "quantity": 4,
-    },
-    {
-        "item_id": "{item_id}",
-        "quantity": 9,
-    },
-    {
-        "item_id": "{item_id}",
-        "quantity": 13,
-    }
-]
-
-
-
+def generate_supply_item_model(item_ids: list[UUID]):
+    return [{"item_id": item_id, "quantity": random.randint(1, 13)} for item_id in item_ids]

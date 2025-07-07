@@ -1,6 +1,6 @@
 import pytest
 from app.db.models import Order, Item, OrderItem
-from datatest import create_items, update_items, supply_items
+from datatest import create_items, update_items, generate_supply_item_model
 from httpx import AsyncClient
 
 
@@ -64,21 +64,45 @@ async def test_3_update_items(async_client: AsyncClient, test_2_get_items):
 
 
 async def test_4_supply_items(async_client: AsyncClient, test_3_update_items):
-    for item, quantity in zip(test_3_update_items, supply_items):
-        response = await async_client.put("api/v1/items/deliver", json=[{
-            "item_id": item["item_id"],
-            "quantity": quantity
-        }])
-
+    quantities = []
+    for item in test_3_update_items:
+        request_model = generate_supply_item_model(item_ids=[item["item_id"]])
+        response = await async_client.put("api/v1/items/deliver", json=generate_supply_item_model(item_ids=[item["item_id"]]))
         assert response.status_code == 200
         assert response.json() == {"success": True}
-        assert (await async_client.get(f"api/v1/items/{item["item_id"]}")).json()["quantity"] == quantity
+        quantities.append(request_model[0]["quantity"])
     
-    response = await async_client.put("api/v1/items/deliver", json=[{"item_id": item["item_id"], "quantity": quantity} for item, quantity in zip(test_3_update_items, supply_items)])
+    item_ids = []
+    for i in range(2):
+        item_ids.append(test_3_update_items[i]["item_id"])
+    
+    request_model = generate_supply_item_model(item_ids=item_ids)
 
-    for i in range(len(supply_items)):
-        supply_items[i] += supply_items[i]
+    for i in range(len(request_model)):
+        quantities[i] += request_model[i]["quantity"]
     
+    response = await async_client.put("api/v1/items/deliver", json=request_model)
+    assert response.status_code == 200
+    assert response.json() == {"success": True}
+
+    item_ids = []
+    for i in range(1, 3):
+        item_ids.append(test_3_update_items[i]["item_id"])
     
+    request_model = generate_supply_item_model(item_ids=item_ids)
+
+    for i in range(1, 3):
+        quantities[i] += request_model[i-1]["quantity"]
+
+    response = await async_client.put("api/v1/items/deliver", json=request_model)
+    assert response.status_code == 200
+    assert response.json() == {"success": True}
+
+    db_items = (await async_client.get("api/v1/items")).json()
+
+    for item, quantity in zip(test_3_update_items, quantities):
+        assert next((db_item for db_item in db_items if db_item["item_id"] == item["item_id"]))["quantity"] == quantity
     
+    return db_items
+
     
