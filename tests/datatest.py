@@ -34,5 +34,13 @@ update_items = [
     }
 ]
 
-def generate_supply_item_model(item_ids: list[UUID]):
-    return [{"item_id": item_id, "quantity": random.randint(1, 13)} for item_id in item_ids]
+def generate_supply_item_model(item_ids):
+    result = []
+    for item_id in item_ids:
+        quantity = random.randint(1, 13)
+        result.append({
+            "item_id": item_id,
+            "quantity": quantity
+        })
+
+    return result

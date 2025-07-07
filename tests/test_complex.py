@@ -29,7 +29,7 @@ async def test_1_create_items(async_client: AsyncClient):
 
 @pytest.fixture
 async def test_2_get_items(async_client: AsyncClient, test_1_create_items):
-    response = await async_client.get("api/v1/items/")
+    response = await async_client.get("api/v1/items")
 
     assert response.status_code == 200
     assert response.json() == test_1_create_items
@@ -67,7 +67,7 @@ async def test_4_supply_items(async_client: AsyncClient, test_3_update_items):
     quantities = []
     for item in test_3_update_items:
         request_model = generate_supply_item_model(item_ids=[item["item_id"]])
-        response = await async_client.put("api/v1/items/deliver", json=generate_supply_item_model(item_ids=[item["item_id"]]))
+        response = await async_client.put("api/v1/items/deliver", json=request_model)
         assert response.status_code == 200
         assert response.json() == {"success": True}
         quantities.append(request_model[0]["quantity"])

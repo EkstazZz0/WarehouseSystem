@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[ItemPublic])
+@router.get("", response_model=list[ItemPublic])
 async def get_items(session: SessionDep, 
                     limit: Annotated[int | None, Query(gt=0, le=100)] = 10, 
                     offset: Annotated[int | None, Query(ge=0)] = 0, 
