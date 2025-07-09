@@ -1,6 +1,5 @@
 from sqlmodel import SQLModel, Field
 from uuid import UUID, uuid4
-from enum import Enum
 from datetime import datetime
 
 from app.schemas.items import ItemBase

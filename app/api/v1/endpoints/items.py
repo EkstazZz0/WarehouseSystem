@@ -33,13 +33,12 @@ async def get_item(item_id: UUID, session: SessionDep):
     if not item:
         raise HTTPException(status_code=404, detail="Item with id {item_id} was not found in database.")
 
-    return await session.get(Item, item_id)
+    return item
 
 
 @router.post("/create", response_model=ItemPublic, status_code=status.HTTP_201_CREATED)
 async def create_item(item: ItemCreate, session: SessionDep):
     db_item = Item.model_validate(item)
-    print(session)
     try:
        return await db_create_item(item=db_item, session=session)
     except IntegrityError:
